@@ -1,0 +1,43 @@
+# requirements.txt
+# apache-airflow==3.0.3
+# MLops 핵심 라이브러리
+polars==1.31.0
+pyarrow==21.0.0
+numpy==2.3.2
+pandas==2.3.1
+
+# AWS/MinIO 연동
+boto3==1.39.14
+s3fs==0.4.2
+botocore==1.39.14
+
+# ML/AI 라이브러리
+torch==2.7.1
+transformers==4.54.0
+datasets==4.0.0
+scikit-learn==1.7.1
+huggingface-hub==0.34.1
+
+# 데이터베이스 연동
+pymongo==4.13.2
+psycopg2-binary==2.9.10
+sqlalchemy==2.0.41
+
+# Airflow Providers
+apache-airflow-providers-mongo==3.4.0
+apache-airflow-providers-postgres==5.7.1
+apache-airflow-providers-amazon==8.13.0
+
+# 압축/직렬화
+fastparquet==2024.11.0
+pyarrow-hotfix==0.7
+
+# 유틸리티
+tqdm==4.67.1
+click==8.2.1
+python-dotenv==1.1.1
+
+# 개발/디버깅 (선택사항)
+ipython==9.4.0
+jupyter==1.1.1
+plotly==6.2.0

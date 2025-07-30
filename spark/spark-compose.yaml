@@ -1,0 +1,225 @@
+version: '3.8'
+
+# 공통 설정 정의
+x-spark-common: &spark-common
+  image: bitnami/spark:3.5.0
+  environment: &spark-common-env
+    SPARK_RPC_AUTHENTICATION_ENABLED: no
+    SPARK_RPC_ENCRYPTION_ENABLED: no
+    SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+    SPARK_SSL_ENABLED: no
+    PYSPARK_PYTHON: python3 # Python/ML 라이브러리 지원
+    PYSPARK_DRIVER_PYTHON: python3 # Python/ML 라이브러리 지원
+  volumes:
+    - ${PWD}/spark-data:/opt/spark/data
+    - ${PWD}/spark-logs:/opt/spark/logs
+    - ${PWD}/spark-jobs:/opt/spark/jobs
+    - ${PWD}/shared:/opt/spark/shared
+  networks:
+    - spark-network
+
+x-notebook-common: &notebook-common
+  volumes:
+    - ${PWD}/notebooks:/home/jovyan/notebooks
+    - ${PWD}/data:/home/jovyan/data
+    - ${PWD}/shared:/home/jovyan/shared
+    - ${PWD}/spark-data:/home/jovyan/spark-data:ro  # 읽기 전용으로 Spark 데이터 접근
+  networks:
+    - spark-network
+  depends_on:
+    spark-master:
+      condition: service_healthy
+
+services:
+  # Spark Master
+  spark-master:
+    <<: *spark-common
+    container_name: spark-master
+    hostname: spark-master
+    environment:
+      <<: *spark-common-env
+      SPARK_MODE: master
+      SPARK_MASTER_OPTS: "-Dspark.deploy.defaultCores=2 -Dspark.deploy.defaultMemory=2g"
+    ports:
+      - "7070:8080"  # Spark Master Web UI
+      - "7077:7077"  # Spark Master Service
+      - "4040:4040"  # Spark Application Web UI
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # Spark Worker (확장 가능한 구조)
+  spark-worker-1:
+    <<: *spark-common
+    container_name: spark-worker-1
+    environment:
+      <<: *spark-common-env
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077  # 올바른 포트
+      SPARK_WORKER_MEMORY: 4g
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_OPTS: "-Dspark.worker.cleanup.enabled=true"
+    ports:
+      - "8081:8080"  # Worker 1 Web UI
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  spark-worker-2:
+    <<: *spark-common
+    container_name: spark-worker-2
+    environment:
+      <<: *spark-common-env
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4g
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_OPTS: "-Dspark.worker.cleanup.enabled=true"
+    ports:
+      - "8082:8080"  # Worker 2 Web UI
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # JupyterLab (PySpark 지원)
+  jupyterlab:
+    <<: *notebook-common
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: spark-jupyterlab
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      GRANT_SUDO: "yes"
+      SPARK_MASTER: spark://spark-master:7077
+      # JupyterLab에서 Spark 설정
+      SPARK_DRIVER_MEMORY: 2g
+      SPARK_EXECUTOR_MEMORY: 2g
+      SPARK_EXECUTOR_CORES: 1
+    ports:
+      - "8888:8888"
+    user: "${JUPYTER_UID:-1000}:${JUPYTER_GID:-100}"
+    command: start-notebook.py --NotebookApp.token='' --NotebookApp.password=''
+    restart: unless-stopped
+    profiles:
+      - jupyter  # 선택적 실행을 위한 프로파일
+
+  # Zeppelin (대안 노트북 환경)
+  zeppelin:
+    image: apache/zeppelin:0.10.1
+    container_name: spark-zeppelin
+    environment:
+      ZEPPELIN_LOG_DIR: /logs
+      ZEPPELIN_NOTEBOOK_DIR: /notebook
+      ZEPPELIN_ADDR: 0.0.0.0
+      ZEPPELIN_PORT: 8080
+      SPARK_MASTER: spark://spark-master:7077
+      # Zeppelin Spark 인터프리터 설정
+      SPARK_SUBMIT_OPTIONS: "--driver-memory 2g --executor-memory 2g"
+    ports:
+      - "8083:8080"
+    volumes:
+      - ${PWD}/zeppelin/notebooks:/notebook
+      - ${PWD}/zeppelin/logs:/logs
+      - ${PWD}/zeppelin/conf:/opt/zeppelin/conf
+      - ${PWD}/data:/data
+    networks:
+      - spark-network
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - zeppelin  # 선택적 실행을 위한 프로파일
+
+  # Spark History Server (작업 이력 관리)
+  spark-history:
+    <<: *spark-common
+    container_name: spark-history
+    environment:
+      <<: *spark-common-env
+      SPARK_MODE: history
+      SPARK_HISTORY_FS_LOG_DIRECTORY: /opt/spark/logs
+      SPARK_HISTORY_OPTS: "-Dspark.history.ui.port=18080"
+    ports:
+      - "18080:18080"
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Zookeeper (Kafka용)
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: spark-zookeeper
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/bitnami/zookeeper
+    networks:
+      - spark-network
+    restart: unless-stopped
+    profiles:
+      - kafka
+
+  # Kafka (스트리밍 데이터용)
+  kafka:
+    image: bitnami/kafka:3.5
+    container_name: spark-kafka
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_NUM_PARTITIONS: 3
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"  # 내부 통신용
+      - "9093:9093"  # 외부 접속용
+    volumes:
+      - kafka-data:/bitnami/kafka
+    networks:
+      - spark-network
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
+    profiles:
+      - kafka
+
+  # Redis (캐싱/세션 관리용, 선택사항)
+  redis:
+    image: redis:7-alpine
+    container_name: spark-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - spark-network
+    restart: unless-stopped
+    profiles:
+      - cache
+
+volumes:
+  zookeeper-data:
+    driver: local
+  kafka-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  spark-network:
+    driver: bridge
+    name: airflow-network
+    external: true  # 다른 docker-compose와 연결하려면 external: true로 변경

@@ -1,0 +1,1 @@
+docker compose up -d airflow-init && docker compose up -d
