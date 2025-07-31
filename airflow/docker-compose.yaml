@@ -230,6 +230,6 @@ volumes:
   minio-data:
 
 networks:
-  default:
+  airflow-network:
     name: airflow-network
     external: true

@@ -8,14 +8,13 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# 가상환경 생성
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# requirements 설치
+# 가상환경 생성 및 requirements 설치
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN uv venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN uv pip install -r /tmp/requirements.txt
 
 # Stage 2: 운영 스테이지
 FROM apache/airflow:3.0.3-python3.11

@@ -43,7 +43,7 @@ docker-compose up -d
 2. Run Spark cluster:
 ```bash
 cd spark
-docker-compose -f spark-compose.yaml up -d
+docker-compose -f docker-compose.yaml up -d
 ```
 
 ## Data Pipeline
