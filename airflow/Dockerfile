@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # 가상환경 생성 및 requirements 설치
-COPY requirements.txt /tmp/requirements.txt
+COPY requirements-server.txt /tmp/requirements.txt
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN uv pip install -r /tmp/requirements.txt

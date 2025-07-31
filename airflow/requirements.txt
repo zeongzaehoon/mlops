@@ -17,6 +17,8 @@ apache-airflow-providers-mongo==5.2.1
 apache-airflow-providers-postgres==6.2.1
 apache-airflow-providers-smtp==2.1.1
 apache-airflow-providers-standard==1.4.1
+apache-airflow-providers-celery>=3.3.0
+apache-airflow-providers-fab==2.3.0
 apache-airflow-task-sdk==1.0.3
 appnope==0.1.4
 argcomplete==3.6.2

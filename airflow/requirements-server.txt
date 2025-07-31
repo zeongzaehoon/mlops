@@ -1,5 +1,22 @@
-# requirements.txt
-# apache-airflow==3.0.3
+# Airflow Core
+apache-airflow==3.0.3
+
+# Celery
+celery==5.4.0
+
+# Airflow Providers - 필수
+apache-airflow-providers-celery==3.5.0
+apache-airflow-providers-fab==2.3.0
+apache-airflow-providers-postgres==6.2.1
+apache-airflow-providers-amazon==9.10.0
+apache-airflow-providers-mongo==5.2.1
+apache-airflow-providers-http==5.3.2
+apache-airflow-providers-smtp==2.1.1
+apache-airflow-providers-standard==1.4.1
+apache-airflow-providers-common-compat==1.7.2
+apache-airflow-providers-common-io==1.6.1
+apache-airflow-providers-common-sql==1.27.3
+
 # MLops 핵심 라이브러리
 polars==1.31.0
 pyarrow==21.0.0
@@ -19,14 +36,9 @@ scikit-learn==1.7.1
 huggingface-hub==0.34.1
 
 # 데이터베이스 연동
-pymongo==4.13.2
+pymongo==4.10.1
 psycopg2-binary==2.9.10
-sqlalchemy==2.0.41
-
-# Airflow Providers
-apache-airflow-providers-mongo==3.4.0
-apache-airflow-providers-postgres==5.7.1
-apache-airflow-providers-amazon==8.13.0
+SQLAlchemy==1.4.54
 
 # 압축/직렬화
 fastparquet==2024.11.0
