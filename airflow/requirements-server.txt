@@ -1,11 +1,11 @@
 # Airflow Core
-apache-airflow==3.0.3
+apache-airflow[celery]
 
 # Celery
 celery==5.4.0
 
 # Airflow Providers - 필수
-apache-airflow-providers-celery==3.5.0
+apache-airflow-providers-celery
 apache-airflow-providers-fab==2.3.0
 apache-airflow-providers-postgres==6.2.1
 apache-airflow-providers-amazon==9.10.0

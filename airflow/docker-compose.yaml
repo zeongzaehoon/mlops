@@ -138,11 +138,9 @@ services:
 
   airflow-worker:
     <<: *airflow-common
-    command: ["airflow", "celery", "worker", "-c", "16"]
+    command: celery worker
     healthcheck:
-      test:
-        - "CMD-SHELL"
-        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      test: ["CMD-SHELL", 'airflow jobs check --job-type WorkerJob --hostname "$${HOSTNAME}"']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -150,6 +148,8 @@ services:
     environment:
       <<: *airflow-common-env
       DUMB_INIT_SETSID: "0"
+      CELERY_APP: airflow.executors.celery_executor
+      C_FORCE_ROOT: "true"
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
@@ -207,7 +207,7 @@ services:
 
   flower:
     <<: *airflow-common
-    command: ["airflow", "celery", "flower", "--port=5555"]
+    command: celery flower
     profiles:
       - flower
     ports:

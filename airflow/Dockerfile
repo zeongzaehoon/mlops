@@ -1,5 +1,5 @@
 # Stage 1: 빌드 스테이지
-FROM python:3.11-slim as builder
+FROM python:3.11 as builder
 
 # 빌드 도구 설치
 RUN apt-get update && apt-get install -y \
