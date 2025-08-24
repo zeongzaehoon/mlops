@@ -3,6 +3,7 @@ version: '3.8'
 # 공통 설정 정의
 x-spark-common: &spark-common
   image: bitnami/spark:3.5.0
+  platform: linux/amd64
   environment: &spark-common-env
     SPARK_RPC_AUTHENTICATION_ENABLED: no
     SPARK_RPC_ENCRYPTION_ENABLED: no
@@ -15,8 +16,6 @@ x-spark-common: &spark-common
     - ${PWD}/spark-logs:/opt/spark/logs
     - ${PWD}/spark-jobs:/opt/spark/jobs
     - ${PWD}/shared:/opt/spark/shared
-  networks:
-    - spark-network
 
 x-notebook-common: &notebook-common
   volumes:
@@ -24,11 +23,8 @@ x-notebook-common: &notebook-common
     - ${PWD}/data:/home/jovyan/data
     - ${PWD}/shared:/home/jovyan/shared
     - ${PWD}/spark-data:/home/jovyan/spark-data:ro  # 읽기 전용으로 Spark 데이터 접근
-  networks:
-    - spark-network
   depends_on:
-    spark-master:
-      condition: service_healthy
+    - spark-master
 
 services:
   # Spark Master
@@ -44,12 +40,6 @@ services:
       - "7070:8080"  # Spark Master Web UI
       - "7077:7077"  # Spark Master Service
       - "4040:4040"  # Spark Application Web UI
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     restart: unless-stopped
 
   # Spark Worker (확장 가능한 구조)
@@ -66,8 +56,7 @@ services:
     ports:
       - "8081:8080"  # Worker 1 Web UI
     depends_on:
-      spark-master:
-        condition: service_healthy
+      - spark-master
     restart: unless-stopped
 
   spark-worker-2:
@@ -83,14 +72,14 @@ services:
     ports:
       - "8082:8080"  # Worker 2 Web UI
     depends_on:
-      spark-master:
-        condition: service_healthy
+      - spark-master
     restart: unless-stopped
 
   # JupyterLab (PySpark 지원)
   jupyterlab:
     <<: *notebook-common
     image: jupyter/pyspark-notebook:spark-3.5.0
+    platform: linux/arm64
     container_name: spark-jupyterlab
     environment:
       JUPYTER_ENABLE_LAB: "yes"
@@ -111,6 +100,7 @@ services:
   # Zeppelin (대안 노트북 환경)
   zeppelin:
     image: apache/zeppelin:0.10.1
+    platform: linux/amd64
     container_name: spark-zeppelin
     environment:
       ZEPPELIN_LOG_DIR: /logs
@@ -127,11 +117,8 @@ services:
       - ${PWD}/zeppelin/logs:/logs
       - ${PWD}/zeppelin/conf:/opt/zeppelin/conf
       - ${PWD}/data:/data
-    networks:
-      - spark-network
     depends_on:
-      spark-master:
-        condition: service_healthy
+      - spark-master
     restart: unless-stopped
     profiles:
       - zeppelin  # 선택적 실행을 위한 프로파일
@@ -163,8 +150,6 @@ services:
       - "2181:2181"
     volumes:
       - zookeeper-data:/bitnami/zookeeper
-    networks:
-      - spark-network
     restart: unless-stopped
     profiles:
       - kafka
@@ -188,8 +173,6 @@ services:
       - "9093:9093"  # 외부 접속용
     volumes:
       - kafka-data:/bitnami/kafka
-    networks:
-      - spark-network
     depends_on:
       - zookeeper
     restart: unless-stopped
@@ -204,8 +187,6 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    networks:
-      - spark-network
     restart: unless-stopped
     profiles:
       - cache
@@ -219,7 +200,6 @@ volumes:
     driver: local
 
 networks:
-  spark-network:
-    driver: bridge
-    name: airflow-network
-    external: true  # 다른 docker-compose와 연결하려면 external: true로 변경
+  default:
+    name: mlops-network
+    external: true

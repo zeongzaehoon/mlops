@@ -1,1 +1,1 @@
-docker compose build && docker compose up -d airflow-init && docker compose up -d
+docker compose build && docker compose up --propile init up
