@@ -9,6 +9,7 @@ seaborn==0.13.2     # Data Visualization Library
 
 # DATA PIPELINE PART
 pyarrow==19.0.1       # Parquet for Spark, DuckDB
+polars==1.32.3
 h5py==3.13.0          # HDF5
 duckdb==1.2.2         # SQL for Analytics
 pyspark==3.5.5        # Spark Python API
