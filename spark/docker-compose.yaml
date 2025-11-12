@@ -40,7 +40,7 @@ services:
       - "7070:8080"  # Spark Master Web UI
       - "7077:7077"  # Spark Master Service
       - "4040:4040"  # Spark Application Web UI
-    restart: unless-stopped
+    # restart: unless-stopped
 
   # Spark Worker (확장 가능한 구조)
   spark-worker-1:
@@ -57,7 +57,7 @@ services:
       - "8081:8080"  # Worker 1 Web UI
     depends_on:
       - spark-master
-    restart: unless-stopped
+    # restart: unless-stopped
 
   spark-worker-2:
     <<: *spark-common
@@ -73,7 +73,7 @@ services:
       - "8082:8080"  # Worker 2 Web UI
     depends_on:
       - spark-master
-    restart: unless-stopped
+    # restart: unless-stopped
 
   # JupyterLab (PySpark 지원)
   jupyterlab:
@@ -93,7 +93,7 @@ services:
       - "8888:8888"
     user: "${JUPYTER_UID:-1000}:${JUPYTER_GID:-100}"
     command: start-notebook.py --NotebookApp.token='' --NotebookApp.password=''
-    restart: unless-stopped
+    # restart: unless-stopped
     profiles:
       - jupyter  # 선택적 실행을 위한 프로파일
 
@@ -119,7 +119,7 @@ services:
       - ${PWD}/data:/data
     depends_on:
       - spark-master
-    restart: unless-stopped
+    # restart: unless-stopped
     profiles:
       - zeppelin  # 선택적 실행을 위한 프로파일
 
@@ -134,7 +134,7 @@ services:
       SPARK_HISTORY_OPTS: "-Dspark.history.ui.port=18080"
     ports:
       - "18080:18080"
-    restart: unless-stopped
+    # restart: unless-stopped
     profiles:
       - monitoring
 
@@ -150,7 +150,7 @@ services:
       - "2181:2181"
     volumes:
       - zookeeper-data:/bitnami/zookeeper
-    restart: unless-stopped
+    # restart: unless-stopped
     profiles:
       - kafka
 
@@ -175,7 +175,7 @@ services:
       - kafka-data:/bitnami/kafka
     depends_on:
       - zookeeper
-    restart: unless-stopped
+    # restart: unless-stopped
     profiles:
       - kafka
 
@@ -187,7 +187,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    restart: unless-stopped
+    # restart: unless-stopped
     profiles:
       - cache
 

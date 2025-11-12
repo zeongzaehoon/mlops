@@ -53,7 +53,7 @@ services:
       interval: 10s
       retries: 5
       start_period: 5s
-    restart: always
+    # restart: always
 
   redis:
     image: redis:7.2-bookworm
@@ -65,7 +65,7 @@ services:
       timeout: 30s
       retries: 50
       start_period: 30s
-    restart: always
+    # restart: always
 
   minio:
     image: minio/minio:RELEASE.2024-01-16T16-07-38Z
@@ -86,7 +86,7 @@ services:
       timeout: 20s
       retries: 3
       start_period: 30s
-    restart: always
+    # restart: always
 
 
   airflow-apiserver:
@@ -100,7 +100,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
+    # restart: always
     depends_on:
       <<: *airflow-common-depends-on
 
@@ -113,7 +113,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
+    # restart: always
     depends_on:
       <<: *airflow-common-depends-on
 
@@ -126,7 +126,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
+    # restart: always
     depends_on:
       <<: *airflow-common-depends-on
 
@@ -144,7 +144,7 @@ services:
       DUMB_INIT_SETSID: "0"
       CELERY_APP: airflow.executors.celery_executor
       C_FORCE_ROOT: "true"
-    restart: always
+    # restart: always
     depends_on:
       <<: *airflow-common-depends-on
       airflow-apiserver:
@@ -159,7 +159,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
+    # restart: always
     depends_on:
       <<: *airflow-common-depends-on
 
@@ -197,7 +197,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
+    # restart: always
     depends_on:
       <<: *airflow-common-depends-on
 
